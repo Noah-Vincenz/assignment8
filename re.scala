@@ -77,8 +77,8 @@ def der (c: Char, r: Rexp) : Rexp = r match { //doesnt work for last der
 // however it does not simplify inside STAR-regular
 // expressions
 
-def simp(r: Rexp) : Rexp = {
-  nullable(r)
+def simp(r: Rexp) : Rexp = { //nullabe(der(der(x)) ??
+  nullable(der(der(r)))
 }
 
 // (1d) Complete the two functions below; the first 
@@ -93,7 +93,7 @@ def ders (s: List[Char], r: Rexp) : Rexp = s match {
 }
 
 def matcher(r: Rexp, s: String): Boolean = {
-  val derivatives = ders (s.toListl r)
+  val derivatives = ders (s.toListl, r)
   nullable(derivatives)
 }
 
