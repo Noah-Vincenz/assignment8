@@ -36,20 +36,40 @@ implicit def stringOps (s: String) = new {
   def ~ (r: String) = SEQ(s, r)
 }
 
+
+
+
 // (1a) Complete the function nullable according to
-// the definition given in the coursework; this 
+// the definition given in the coursework; this
 // function checks whether a regular expression
 // can match the empty string
 
-def nullable (r: Rexp) : Boolean = ...
-
+def nullable (r: Rexp) : Boolean = r match {
+  case ZERO => false
+  case ONE => true
+  case CHAR(c) => false
+  case ALT(c,d) => nullable(c) || nullable(d)
+  case SEQ(c,d) => nullable(c) && nullable(d)
+  case STAR(c) => true
+}
 
 // (1b) Complete the function der according to
 // the definition given in the coursework; this
 // function calculates the derivative of a 
 // regular expression w.r.t. a character
 
-def der (c: Char, r: Rexp) : Rexp = ...
+def der (c: Char, r: Rexp) : Rexp = r match { //doesnt work for last der
+  case ZERO => ZERO
+  case ONE => ZERO
+  case CHAR(d) =>
+    if (c == d) ONE
+    else ZERO
+  case ALT(r1,r2) => der(c,r1) | der(c,r2)
+  case SEQ(r1,r2) =>
+    if (nullable(r1)) (der(c,r1) ~ r2) | der(c,r2)
+    else der(c,r1) ~ r2
+  case STAR(s) => der(c,s) ~ r
+}
 
 // (1c) Complete the function der according to
 // the specification given in the coursework; this
@@ -57,7 +77,9 @@ def der (c: Char, r: Rexp) : Rexp = ...
 // however it does not simplify inside STAR-regular
 // expressions
 
-def simp(r: Rexp) : Rexp = ... 
+def simp(r: Rexp) : Rexp = {
+  nullable(r)
+}
 
 // (1d) Complete the two functions below; the first 
 // calculates the derivative w.r.t. a string; the second
@@ -65,9 +87,15 @@ def simp(r: Rexp) : Rexp = ...
 // expression and a string and checks whether the
 // string matches the regular expression
 
-def ders (s: List[Char], r: Rexp) : Rexp = ... 
+def ders (s: List[Char], r: Rexp) : Rexp = s match {
+  case Nil => r
+  case c :: cs => ders(cs, simp(der(c, r))
+}
 
-def matcher(r: Rexp, s: String): Boolean = ...
+def matcher(r: Rexp, s: String): Boolean = {
+  val derivatives = ders (s.toListl r)
+  nullable(derivatives)
+}
 
 
 // (1e) Complete the function below: it searches (from the left to 
