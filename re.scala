@@ -67,7 +67,7 @@ def der (c: Char, r: Rexp) : Rexp = r match { //doesnt work for last der
   case ALT(r1,r2) => der(c,r1) | der(c,r2)
   case SEQ(r1,r2) =>
     if (nullable(r1)) (der(c,r1) ~ r2) | der(c,r2)
-    else der(c,r1) ~ r2
+    else der(c,r1) ~ r2 //
   case STAR(s) => der(c,s) ~ r
 }
 
@@ -77,8 +77,19 @@ def der (c: Char, r: Rexp) : Rexp = r match { //doesnt work for last der
 // however it does not simplify inside STAR-regular
 // expressions
 
-def simp(r: Rexp) : Rexp = { //nullabe(der(der(x)) ??
-  nullable(der(der(r)))
+def simp(r: Rexp) : Rexp = r match {
+  case SEQ(r1, ZERO) => ZERO
+  case SEQ(ZERO, r1) => ZERO
+  case SEQ(r1, ONE) => simp(r1)
+  case SEQ(ONE, r1) => simp(r1)
+  case ALT(r1, ZERO) => simp(r1)
+  case ALT(ZERO, r1) => simp(r1)
+  //case ALT(r1, ONE) => ONE//
+  //case ALT(ONE, r1) => ONE//
+  case ALT(r1, r2) =>
+    if (r1 == r2) simp(r1)
+    else r
+  case other => r
 }
 
 // (1d) Complete the two functions below; the first 
@@ -87,16 +98,15 @@ def simp(r: Rexp) : Rexp = { //nullabe(der(der(x)) ??
 // expression and a string and checks whether the
 // string matches the regular expression
 
+@tailrec
 def ders (s: List[Char], r: Rexp) : Rexp = s match {
   case Nil => r
-  case c :: cs => ders(cs, simp(der(c, r))
+  case c :: cs => ders(cs, simp(der(c, r)))
 }
 
 def matcher(r: Rexp, s: String): Boolean = {
-  val derivatives = ders (s.toListl, r)
-  nullable(derivatives)
+  nullable(ders (s.toList, r))
 }
-
 
 // (1e) Complete the function below: it searches (from the left to 
 // right) in string s1 all the non-empty substrings that match the 
@@ -105,9 +115,30 @@ def matcher(r: Rexp, s: String): Boolean = {
 // assumed to be non-overlapping. All these substrings in s1 are replaced
 // by s2.
 
-def replace(r: Rexp, s1: String, s2: String): String = ...
+def replace(r: Rexp, s1: String, s2: String): String = {
+  replaceT(r, s1, s2, s1.length, "")
+}
 
-
+import scala.annotation.tailrec
+@tailrec
+def replaceT(r: Rexp, s1: String, s2: String, endIndex: Int, stringToReturn: String): String = {
+  if (matcher(r, s1.substring(0, endIndex))) {
+    if (endIndex == s1.length) { //final case
+      stringToReturn + s2
+    }
+    else {
+      replaceT(r, s1.substring(endIndex, s1.length), s2, s1.length - endIndex, stringToReturn + s2)
+    }
+  }
+  else { //does not match
+    if (endIndex == 1) { //cannot be made shorter
+      replaceT(r, s1.substring(1, s1.length), s2, s1.length - 1, stringToReturn + s1.substring(0, 1))
+    }
+    else {
+      replaceT(r, s1, s2, endIndex - 1, stringToReturn)
+    }
+  }
+}
 
 // some testing data
 // the supposedly 'evil' regular expression (a*)* b
