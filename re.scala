@@ -91,119 +91,9 @@ def der (c: Char, r: Rexp) : Rexp = r match { //doesnt work for last der
 // however it does not simplify inside STAR-regular
 // expressions
 
-//@tailrec
-((CHAR('a')|CHAR('b'))|CHAR('c') )  ~ ((CHAR('d')~ZERO) | (STAR(CHAR('e')~ZERO) | ONE))
-
-simp(SEQ(ALT(ALT(CHAR('a'),CHAR('b')),CHAR('c')),ALT(SEQ(CHAR('d'),ZERO),ALT(STAR(SEQ(CHAR('e'),ZERO)),ONE))))
-
-
 import scala.annotation.tailrec
+
 @tailrec
-
-//1: STACKOVERFLOW
-def simp(r: Rexp) : Rexp = r match {
-  case SEQ(r1, ZERO) => ZERO
-  case SEQ(ZERO, r1) => ZERO
-  case SEQ(r1, ONE) => simp(r1)
-  case SEQ(ONE, r1) => simp(r1)
-  case ALT(r1, ZERO) => simp(r1)
-  case ALT(ZERO, r1) => simp(r1)
-  case ALT(CHAR(a), CHAR(b)) =>
-    if (CHAR(a) == CHAR(b)) CHAR(a)
-    else ALT(CHAR(a), CHAR(b))
-  case ALT(r1, r2) =>
-    val x = simp(r1)
-    val y = ALT(simp(r1), simp(r2))
-    val z = simp(y)
-    if (r1 == r2) x
-    else if (ALT(r1, r2) == z) y
-    else z
-  case SEQ(CHAR(a), CHAR(b)) => SEQ(CHAR(a), CHAR(b))
-  case SEQ(r1, r2) =>
-    val x = SEQ(simp(r1), simp(r2))
-    val y = simp(x)
-    if (SEQ(r1, r2) == y) x
-    else y
-  case other => r
-}
-
-
-
-
-//2: STACKOVERFLOW
-def simp(r: Rexp) : Rexp = r match {
-  case SEQ(r1, ZERO) => ZERO
-  case SEQ(ZERO, r1) => ZERO
-  case SEQ(r1, ONE) => simp(r1)
-  case SEQ(ONE, r1) => simp(r1)
-  case ALT(r1, ZERO) => simp(r1)
-  case ALT(ZERO, r1) => simp(r1)
-  case ALT(CHAR(a), CHAR(b)) =>
-    if (CHAR(a) == CHAR(b)) CHAR(a)
-    else ALT(CHAR(a), CHAR(b))
-  case ALT(r1, r2) =>
-    if (r1 == r2) simp(r1)
-    else if (ALT(r1, r2) == simp(ALT(simp(r1), simp(r2)))) ALT(simp(r1), simp(r2))
-    else simp(ALT(simp(r1), simp(r2)))
-  case SEQ(CHAR(a), CHAR(b)) => SEQ(CHAR(a), CHAR(b))
-  case SEQ(r1, r2) =>
-    if (SEQ(r1, r2) == simp(SEQ(simp(r1), simp(r2)))) SEQ(simp(r1), simp(r2))
-    else simp(SEQ(simp(r1), simp(r2)))
-  case other => r
-}
-
-
-//3: WORKS BUT NOT FOR:
-//simp(SEQ(ALT(ALT(CHAR('a'),CHAR('b')),CHAR('c')),ALT(SEQ(CHAR('d'),ZERO),ALT(STAR(SEQ(CHAR('e'),ZERO)),ONE))))
-//FOREVERONGOING
-
-def simp(r: Rexp) : Rexp = r match {
-  case SEQ(r1, ZERO) => ZERO
-  case SEQ(ZERO, r1) => ZERO
-  case SEQ(r1, ONE) => simp(r1)
-  case SEQ(ONE, r1) => simp(r1)
-  case ALT(r1, ZERO) => simp(r1)
-  case ALT(ZERO, r1) => simp(r1)
-  case ALT(CHAR(a), CHAR(b)) =>
-    if (CHAR(a) == CHAR(b)) CHAR(a)
-    else ALT(CHAR(a), CHAR(b))
-  case ALT(r1, r2) =>
-    if (r1 == r2) simp(r1)
-    else simp(ALT(simp(r1), simp(r2))) //
-  case SEQ(CHAR(a), CHAR(b)) => SEQ(CHAR(a), CHAR(b))
-  case SEQ(r1, r2) =>
-    simp(SEQ(simp(r1), simp(r2))) //
-  case other => r
-}
-
-
-//4: works but not for long example
-
-def simp(r: Rexp) : Rexp = {
-  simpT(r, ZERO)
-}
-
-def simpT(r: Rexp, z: Rexp) : Rexp = r match {
-  case SEQ(r1, ZERO) => ZERO
-  case SEQ(ZERO, r1) => ZERO
-  case SEQ(r1, ONE) => simpT(r1, ZERO)
-  case SEQ(ONE, r1) => simpT(r1, ZERO)
-  case ALT(r1, ZERO) => simpT(r1, ZERO)
-  case ALT(ZERO, r1) => simpT(r1, ZERO)
-  case ALT(CHAR(a), CHAR(b)) =>
-    if (CHAR(a) == CHAR(b)) CHAR(a)
-    else ALT(CHAR(a), CHAR(b))
-  case ALT(r1, r2) =>
-    if (r1 == r2) simpT(r1, ZERO)
-    else if (ALT(r1, r2) == z) ALT(r1, r2)
-    else simpT(ALT(simpT(r1, ZERO), simpT(r2, ZERO)), ALT(r1, r2)) //
-  case SEQ(CHAR(a), CHAR(b)) => SEQ(CHAR(a), CHAR(b))
-  case SEQ(r1, r2) =>
-    simpT(SEQ(simpT(r1, ZERO), simpT(r2, ZERO)), SEQ(r1, r2)) //
-  case other => r
-}
-
-//5: raz
 def simp(r: Rexp) : Rexp = r match {
   case SEQ(r1, ZERO) => ZERO
   case SEQ(ZERO, r1) => ZERO
@@ -214,7 +104,7 @@ def simp(r: Rexp) : Rexp = r match {
     case (ZERO, r1) => ZERO
     case (r1, ONE) => simp(r1)
     case (ONE, r1) => simp(r1)
-    case (r1, r2) => SEQ(r1, r2)
+    case (r3, r4) => SEQ(r3, r4)
   }
   case ALT(r1, ZERO) => simp(r1)
   case ALT(ZERO, r1) => simp(r1)
@@ -223,34 +113,16 @@ def simp(r: Rexp) : Rexp = r match {
     else (simp(r1), simp(r2)) match {
       case (r1, ZERO) => simp(r1)
       case (ZERO, r1) => simp(r1)
-      case (r1, r2) =>
-        if (r1 == r2) simp(r1)
-        else ALT(r1, r2)
+      case (r3, r4) =>
+        if (r3 == r4) simp(r3)
+        else ALT(r3, r4)
     }
   case other => r
 }
 
-
-/*
-def simpT(r: Rexp, ) : Rexp = r match {
-  case SEQ(r1, ZERO) => ZERO
-  case SEQ(ZERO, r1) => ZERO
-  case SEQ(r1, ONE) => simp(r1)
-  case SEQ(ONE, r1) => simp(r1)
-  case ALT(r1, ZERO) => simp(r1)
-  case ALT(ZERO, r1) => simp(r1)
-  case ALT(r1, r2) =>
-    if (r1 == r2) simp(r1)
-    else ALT(simp(r1),simp(r2))  //
-  case SEQ(r1, r2) =>
-    SEQ(simp(r1), simp(r2))
-  case other => r
-}
-*/
-
 //simp(ALT(ALT(CHAR('a'),ZERO),SEQ(CHAR('a'),ONE)))
 //simp(ALT(ALT(CHAR('a'),ZERO),SEQ(CHAR('b'),ONE)))
-
+//simp(SEQ(ALT(ALT(CHAR('a'),CHAR('b')),CHAR('c')),ALT(SEQ(CHAR('d'),ZERO),ALT(STAR(SEQ(CHAR('e'),ZERO)),ONE))))
 
 
 
