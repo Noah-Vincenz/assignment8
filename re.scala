@@ -44,7 +44,6 @@ implicit def stringOps (s: String) = new {
 // function checks whether a regular expression
 // can match the empty string
 
-//@tailrec
 def nullable (r: Rexp) : Boolean = r match {
   case ZERO => false
   case ONE => true
@@ -53,26 +52,13 @@ def nullable (r: Rexp) : Boolean = r match {
   case SEQ(c,d) => nullable(c) && nullable(d)
   case STAR(c) => true
 }
-/*
-def nullableT (r: Rexp, list: List[Rexp]) : Boolean = list match {
-  case Nil => false
-  case x :: xs =>
 
-  case ZERO => false
-  case ONE => true
-  case CHAR(c) => false
-  case ALT(c,d) => nullable(c) || nullable(d)
-  case SEQ(c,d) => nullable(c) && nullable(d)
-  case STAR(c) => true
-}
-*/
 // (1b) Complete the function der according to
 // the definition given in the coursework; this
 // function calculates the derivative of a 
 // regular expression w.r.t. a character
 
-//@tailrec
-def der (c: Char, r: Rexp) : Rexp = r match { //doesnt work for last der
+def der (c: Char, r: Rexp) : Rexp = r match {
   case ZERO => ZERO
   case ONE => ZERO
   case CHAR(d) =>
@@ -91,9 +77,6 @@ def der (c: Char, r: Rexp) : Rexp = r match { //doesnt work for last der
 // however it does not simplify inside STAR-regular
 // expressions
 
-import scala.annotation.tailrec
-
-@tailrec
 def simp(r: Rexp) : Rexp = r match {
   case SEQ(r1, ZERO) => ZERO
   case SEQ(ZERO, r1) => ZERO
@@ -104,7 +87,7 @@ def simp(r: Rexp) : Rexp = r match {
     case (ZERO, r1) => ZERO
     case (r1, ONE) => simp(r1)
     case (ONE, r1) => simp(r1)
-    case (r3, r4) => SEQ(r3, r4)
+    case (r3, r4) => r3 ~ r4
   }
   case ALT(r1, ZERO) => simp(r1)
   case ALT(ZERO, r1) => simp(r1)
@@ -115,16 +98,10 @@ def simp(r: Rexp) : Rexp = r match {
       case (ZERO, r1) => simp(r1)
       case (r3, r4) =>
         if (r3 == r4) simp(r3)
-        else ALT(r3, r4)
+        else r3 | r4
     }
   case other => r
 }
-
-//simp(ALT(ALT(CHAR('a'),ZERO),SEQ(CHAR('a'),ONE)))
-//simp(ALT(ALT(CHAR('a'),ZERO),SEQ(CHAR('b'),ONE)))
-//simp(SEQ(ALT(ALT(CHAR('a'),CHAR('b')),CHAR('c')),ALT(SEQ(CHAR('d'),ZERO),ALT(STAR(SEQ(CHAR('e'),ZERO)),ONE))))
-
-
 
 // (1d) Complete the two functions below; the first 
 // calculates the derivative w.r.t. a string; the second
@@ -132,7 +109,6 @@ def simp(r: Rexp) : Rexp = r match {
 // expression and a string and checks whether the
 // string matches the regular expression
 
-@tailrec
 def ders (s: List[Char], r: Rexp) : Rexp = s match {
   case Nil => r
   case c :: cs => ders(cs, simp(der(c, r)))
@@ -152,24 +128,15 @@ def matcher(r: Rexp, s: String): Boolean = {
 def replace(r: Rexp, s1: String, s2: String): String = {
   replaceT(r, s1, s2, s1.length, "")
 }
-import scala.annotation.tailrec
-@tailrec
+
 def replaceT(r: Rexp, s1: String, s2: String, endIndex: Int, stringToReturn: String): String = {
   if (matcher(r, s1.substring(0, endIndex))) {
-    if (endIndex == s1.length) { //final case
-      stringToReturn + s2
-    }
-    else {
-      replaceT(r, s1.substring(endIndex, s1.length), s2, s1.length - endIndex, stringToReturn + s2)
-    }
+    if (endIndex == s1.length) stringToReturn ++ s2
+    else replaceT(r, s1.substring(endIndex, s1.length), s2, s1.length - endIndex, stringToReturn ++ s2)
   }
   else { //does not match
-    if (endIndex == 1) { //cannot be made shorter
-      replaceT(r, s1.substring(1, s1.length), s2, s1.length - 1, stringToReturn + s1.substring(0, 1))
-    }
-    else {
-      replaceT(r, s1, s2, endIndex - 1, stringToReturn)
-    }
+    if (endIndex == 1) replaceT(r, s1.substring(1, s1.length), s2, s1.length - 1, stringToReturn ++ s1.substring(0, 1))
+    else replaceT(r, s1, s2, endIndex - 1, stringToReturn)
   }
 }
 
