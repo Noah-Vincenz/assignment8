@@ -172,9 +172,64 @@ def simp(r: Rexp) : Rexp = r match {
     else simp(ALT(simp(r1), simp(r2))) //
   case SEQ(CHAR(a), CHAR(b)) => SEQ(CHAR(a), CHAR(b))
   case SEQ(r1, r2) =>
-    else simp(SEQ(simp(r1), simp(r2))) //
+    simp(SEQ(simp(r1), simp(r2))) //
   case other => r
 }
+
+
+//4: works but not for long example
+
+def simp(r: Rexp) : Rexp = {
+  simpT(r, ZERO)
+}
+
+def simpT(r: Rexp, z: Rexp) : Rexp = r match {
+  case SEQ(r1, ZERO) => ZERO
+  case SEQ(ZERO, r1) => ZERO
+  case SEQ(r1, ONE) => simpT(r1, ZERO)
+  case SEQ(ONE, r1) => simpT(r1, ZERO)
+  case ALT(r1, ZERO) => simpT(r1, ZERO)
+  case ALT(ZERO, r1) => simpT(r1, ZERO)
+  case ALT(CHAR(a), CHAR(b)) =>
+    if (CHAR(a) == CHAR(b)) CHAR(a)
+    else ALT(CHAR(a), CHAR(b))
+  case ALT(r1, r2) =>
+    if (r1 == r2) simpT(r1, ZERO)
+    else if (ALT(r1, r2) == z) ALT(r1, r2)
+    else simpT(ALT(simpT(r1, ZERO), simpT(r2, ZERO)), ALT(r1, r2)) //
+  case SEQ(CHAR(a), CHAR(b)) => SEQ(CHAR(a), CHAR(b))
+  case SEQ(r1, r2) =>
+    simpT(SEQ(simpT(r1, ZERO), simpT(r2, ZERO)), SEQ(r1, r2)) //
+  case other => r
+}
+
+//5: raz
+def simp(r: Rexp) : Rexp = r match {
+  case SEQ(r1, ZERO) => ZERO
+  case SEQ(ZERO, r1) => ZERO
+  case SEQ(r1, ONE) => simp(r1)
+  case SEQ(ONE, r1) => simp(r1)
+  case SEQ(r1, r2) => (simp(r1), simp(r2)) match {
+    case (r1, ZERO) => ZERO
+    case (ZERO, r1) => ZERO
+    case (r1, ONE) => simp(r1)
+    case (ONE, r1) => simp(r1)
+    case (r1, r2) => SEQ(r1, r2)
+  }
+  case ALT(r1, ZERO) => simp(r1)
+  case ALT(ZERO, r1) => simp(r1)
+  case ALT(r1, r2) =>
+    if (r1 == r2) simp(r1)
+    else (simp(r1), simp(r2)) match {
+      case (r1, ZERO) => simp(r1)
+      case (ZERO, r1) => simp(r1)
+      case (r1, r2) =>
+        if (r1 == r2) simp(r1)
+        else ALT(r1, r2)
+    }
+  case other => r
+}
+
 
 /*
 def simpT(r: Rexp, ) : Rexp = r match {
