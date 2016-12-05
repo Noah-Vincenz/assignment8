@@ -195,7 +195,7 @@ def fixpT[A](f: A => A, x: A): A = f(x) match {
 }
 
 
-/* test cases
+/*  test cases
 
 //the Collatz function from CW 6 defined as fixpoint
 
@@ -208,9 +208,9 @@ fixpT(ctest, 97L)
 fixpT(ctest, 871L)
 fixpT(ctest, 77031L)
 
-*/
 
-/*
+
+
 // the same function on strings using the regular expression
 // matcher
 
